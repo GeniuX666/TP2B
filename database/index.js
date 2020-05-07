@@ -1,29 +1,67 @@
-const mongoClient = require('mongodb').MongoClient;
-const uriDatabase = "mongodb+srv://admin:betp2@cluster0-3bm3a.azure.mongodb.net/test?retryWrites=true&w=majority";
-const chalk = require('chalk'); 
+var MongoClient = require('mongodb').MongoClient;
+var uriDatabase = "mongodb://admin:asdasd@clusterdev-shard-00-00-f2avg.mongodb.net:27017,clusterdev-shard-00-01-f2avg.mongodb.net:27017,clusterdev-shard-00-02-f2avg.mongodb.net:27017/test?ssl=true&replicaSet=ClusterDev-shard-0&authSource=admin&retryWrites=true&w=majority";
+const chalk = require('chalk');
+const client = new MongoClient(uriDatabase, { useNewUrlParser: true, useUnifiedTopology: true });
 
-const client = new mongoClient(uriDatabase, { useNewUrlParser: true, useUnifiedTopology: true });
+async function CRUDPromise() {
+    return new Promise((resolve, reject) => {
+        client.connect((error, result) => {
+            if (!error) {
+                console.log(chalk.green("Conexión exitosa"));
+                const collectionInventors = result.db('sample_betp2').collection('inventors');
 
-client.connect((error, result) => {
-    if(!error){
-        console.log(chalk.green("Conexión exitosa"));
-        const collectionInventors = result.db('sample_betp2').collection('inventors');
-        const inventors = collectionInventors.find().toArray((error, result)=>{
-            console.log(result);
-            // insertar un nuevo inventor
-            const inventor = {
-                first : "Claudio",
-                last : "Fernandez",
-                year : 2009
-            }
-            collectionInventors.insertOne(inventor, (error, result) => {
-                if(!error){
-                    console.log(chalk.green("Iventor insertado correctamente", result));
+                const inventor = {
+                    first: "Richard",
+                    last: "Ruben",
+                    year: 666
                 }
-            });
+
+                setTimeout(() => {
+                    //Insert
+                    collectionInventors.insertOne(inventor, (error, result) => {
+                        if (!error) {
+                            console.log(chalk.green("Inventor insertado correctamente.", result));
+                        } 
+                        else {
+                            console.log(chalk.red("Error al insertar.", error));
+                        }
+                    });
+                }, 1*1000);
+
+                setTimeout(() => {
+                //Update
+                    collectionInventors.updateOne({ "first": "Richard","last": "Ruben"  }, { $set: {"year" : 2020} }, (error, result) => {
+                        if (!error) {
+                            console.log(chalk.green("Inventor actualizado correctamente.", result));
+                        } else {
+                            console.log(chalk.red("Error al actualizar.", error));
+                        }
+                    });
+                }, 1*2000);
+
+                setTimeout(() => {
+                    //Delete
+                    collectionInventors.deleteMany({ "first": "Richard","last": "Ruben"  }, (error, result) => {
+                        if (!error) {
+                            console.log(chalk.green("Inventor eliminado correctamente.", result));
+                        } else {
+                            console.log(chalk.red("Error al eliminar.", error));
+                        }
+                    });
+                }, 1*3000);
+
+            } else {
+                console.log(chalk.red(error));
+            }
         });
-        console.log(inventors);
-    } else {
-        console.log(chalk.red(error));
-    }
-});
+    })
+}             
+
+async function CRUD() {
+    console.log('llamanding...');
+    const result = await CRUDPromise()
+    console.log(result)
+    client.close()
+}
+
+CRUD();
